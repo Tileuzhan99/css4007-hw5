@@ -4,10 +4,11 @@ The starter dependency list ships the OpenAI adapter and the brief allows
 another provider as long as the setup is documented, so both adapters are
 supported here and selected by environment variable:
 
-    MODEL_PROVIDER=anthropic   MODEL_NAME=claude-opus-5-5     ANTHROPIC_API_KEY=...
-    MODEL_PROVIDER=openai      MODEL_NAME=gpt-5.6-luna        OPENAI_API_KEY=...
+    MODEL_PROVIDER=anthropic    MODEL_NAME=claude-opus-5-5   ANTHROPIC_API_KEY=...
+    MODEL_PROVIDER=openai       MODEL_NAME=gpt-5.6-luna      OPENAI_API_KEY=...
+    MODEL_PROVIDER=google_genai  MODEL_NAME=gemini-3.5-flash  GOOGLE_API_KEY=...
 
-With MODEL_PROVIDER unset, whichever key is present decides (Anthropic first).
+With MODEL_PROVIDER unset, whichever key is present decides, in that order.
 Nothing else in the application knows which provider is in use: the graph only
 needs an object with `bind_tools()` and `invoke()`.
 """
@@ -20,16 +21,21 @@ from typing import Any
 DEFAULT_MODELS = {
     "anthropic": "claude-opus-5-5",
     "openai": "gpt-5.6-luna",
+    "google_genai": "gemini-3.5-flash",
 }
 
 API_KEY_VARIABLES = {
     "anthropic": "ANTHROPIC_API_KEY",
     "openai": "OPENAI_API_KEY",
+    "google_genai": "GOOGLE_API_KEY",
 }
+
+# Checked in this order when MODEL_PROVIDER is not set.
+_PROVIDER_ORDER = ["anthropic", "openai", "google_genai"]
 
 
 def provider() -> str:
-    """anthropic or openai."""
+    """anthropic, openai or google_genai."""
     configured = (os.environ.get("MODEL_PROVIDER") or "").strip().lower()
     if configured:
         if configured not in DEFAULT_MODELS:
@@ -38,10 +44,9 @@ def provider() -> str:
                 f"use one of {sorted(DEFAULT_MODELS)}"
             )
         return configured
-    if os.environ.get("ANTHROPIC_API_KEY"):
-        return "anthropic"
-    if os.environ.get("OPENAI_API_KEY"):
-        return "openai"
+    for name in _PROVIDER_ORDER:
+        if os.environ.get(API_KEY_VARIABLES[name]):
+            return name
     return "anthropic"
 
 
@@ -80,6 +85,13 @@ def build_chat_model(**overrides: Any) -> Any:
         params: dict[str, Any] = {"model": model_name(), "max_tokens": 4096}
         params.update(overrides)
         return ChatAnthropic(**params)
+
+    if name == "google_genai":
+        from langchain_google_genai import ChatGoogleGenerativeAI
+
+        params = {"model": model_name()}
+        params.update(overrides)
+        return ChatGoogleGenerativeAI(**params)
 
     from langchain_openai import ChatOpenAI
 

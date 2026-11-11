@@ -1,12 +1,20 @@
 # Asks for a model API key (hidden input) and writes it into .env.
 # The key is never printed and never leaves this machine.
 #
-#   .\set_key.ps1              # OpenAI (matches MODEL_PROVIDER=openai)
+#   .\set_key.ps1 google       # Google Gemini
+#   .\set_key.ps1 openai       # OpenAI
 #   .\set_key.ps1 anthropic    # Anthropic
-param([ValidateSet('openai', 'anthropic')][string]$Provider = 'openai')
+param([ValidateSet('openai', 'anthropic', 'google')][string]$Provider = 'google')
 
-$variable = if ($Provider -eq 'anthropic') { 'ANTHROPIC_API_KEY' } else { 'OPENAI_API_KEY' }
-$model = if ($Provider -eq 'anthropic') { 'claude-opus-5-5' } else { 'gpt-5.6-luna' }
+$settings = @{
+    openai    = @{ Name = 'openai';       Variable = 'OPENAI_API_KEY';    Model = 'gpt-5.6-luna' }
+    anthropic = @{ Name = 'anthropic';    Variable = 'ANTHROPIC_API_KEY'; Model = 'claude-opus-5-5' }
+    google    = @{ Name = 'google_genai'; Variable = 'GOOGLE_API_KEY';    Model = 'gemini-3.5-flash' }
+}
+$chosen = $settings[$Provider]
+$providerValue = $chosen.Name
+$variable = $chosen.Variable
+$model = $chosen.Model
 
 $envPath = Join-Path $PSScriptRoot ".env"
 if (-not (Test-Path $envPath)) {
@@ -22,7 +30,7 @@ if ([string]::IsNullOrWhiteSpace($key)) { Write-Error "No key entered; .env not 
 $kept = Get-Content $envPath | Where-Object {
     $_ -notmatch "^$variable=" -and $_ -notmatch '^MODEL_PROVIDER=' -and $_ -notmatch '^MODEL_NAME='
 }
-$lines = @("MODEL_PROVIDER=$Provider", "MODEL_NAME=$model", "$variable=$key") + $kept
+$lines = @("MODEL_PROVIDER=$providerValue", "MODEL_NAME=$model", "$variable=$key") + $kept
 [IO.File]::WriteAllLines($envPath, $lines, (New-Object Text.UTF8Encoding($false)))
 
 Write-Host "Saved to .env (git-ignored). Checking that the key and model work..."

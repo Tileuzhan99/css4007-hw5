@@ -57,7 +57,7 @@ python -m pip install -r requirements.txt
 **Part 1 needs no key at all.** Parts 2 and 3 need one tool-capable model.
 
 ```powershell
-.\set_key.ps1            # OpenAI  (or: .\set_key.ps1 anthropic)
+.\set_key.ps1 google     # or: .\set_key.ps1 openai / anthropic
 ```
 
 `set_key.ps1` asks for the key with hidden input, writes it to `.env` and then
@@ -69,8 +69,11 @@ and whichever key is present is used (Anthropic is tried first):
 | --- | --- | --- |
 | `anthropic` | `ANTHROPIC_API_KEY` | `claude-opus-5-5` |
 | `openai` | `OPENAI_API_KEY` | `gpt-5.6-luna` |
+| `google_genai` | `GOOGLE_API_KEY` | `gemini-3.5-flash` |
 
 `MODEL_NAME` is optional; set it to use a different model from that provider.
+Only the adapter for the provider you configure is ever imported, so you do not
+need keys for the others.
 The model and provider actually used are recorded in every saved trace, and
 [SUBMISSION.md](SUBMISSION.md) states the one my results came from.
 
