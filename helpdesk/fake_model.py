@@ -112,11 +112,15 @@ class EchoStateModel(FakeToolModel):
         self.requests.append(list(messages))
         humans = [m for m in messages if isinstance(m, HumanMessage)]
         remembered = _saved_memory_block(messages)
+        latest = str(humans[-1].content) if humans else ""
         return AIMessage(
             content=(
                 "[fake model - pipeline check only] "
                 f"human_messages_seen={len(humans)} "
-                f"user_memory={remembered}"
+                f"user_memory={remembered} "
+                # Echoed so a caller can see what reached the process - and so a
+                # reply in a non-Latin script is reproducible without a real model.
+                f"last_message={latest[:120]!r}"
             )
         )
 

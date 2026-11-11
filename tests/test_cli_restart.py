@@ -40,6 +40,8 @@ def run_app(*args: str) -> subprocess.CompletedProcess:
         env=os.environ.copy(),
         capture_output=True,
         text=True,
+        encoding="utf-8",  # app.py writes UTF-8 whatever the console code page is
+        errors="replace",
         timeout=120,
     )
     assert completed.returncode == 0, (
@@ -165,7 +167,8 @@ def test_part1_clarify_cli_takes_the_other_branch():
 def test_an_unknown_profile_is_rejected():
     completed = subprocess.run(
         [sys.executable, "app.py", "--profile", "sunny", "--message", "hi"],
-        cwd=str(REPO_ROOT), env=os.environ.copy(), capture_output=True, text=True, timeout=60,
+        cwd=str(REPO_ROOT), env=os.environ.copy(), capture_output=True, text=True,
+        encoding="utf-8", errors="replace", timeout=60,
     )
     assert completed.returncode == 2
     assert "unknown --profile" in completed.stderr
@@ -183,5 +186,36 @@ def test_a_saved_trace_records_that_the_run_was_fake():
         payload = json.loads(trace.read_text(encoding="utf-8"))
         assert payload["model"]["pipeline_check_only"] is True
         assert payload["model"]["provider"] == "fake"
+    finally:
+        trace.unlink(missing_ok=True)
+
+
+# -- output encoding -------------------------------------------------------
+
+
+def test_a_reply_in_a_non_latin_script_does_not_kill_the_process():
+    """Regression: printing a Kazakh reply used to raise UnicodeEncodeError on a
+    Windows console, so the process died after the graph had already run and
+    saved its state. The traces were UTF-8; only stdout was not."""
+    kazakh = "\u0411\u04d9\u0440\u0456\u043d \u0434\u0435 \u0436\u0430\u0440\u0430\u0439\u0434\u044b"  # "all is fine"
+    completed = run_app(
+        "--fake", "--user", "demo-user-a", "--thread", "unicode",
+        "--message", f"Please remember that I prefer replies in Kazakh. {kazakh}",
+    )
+    assert "\u04d9" in completed.stdout
+
+
+def test_a_non_latin_message_survives_a_saved_trace():
+    import json
+
+    trace = REPO_ROOT / "outputs" / "_tmp-unicode-trace.json"
+    kazakh = "\u0411\u04d9\u0440\u0456\u043d"
+    try:
+        run_app(
+            "--fake", "--user", "demo-user-a", "--thread", "unicode-trace",
+            "--message", kazakh, "--trace", str(trace),
+        )
+        payload = json.loads(trace.read_text(encoding="utf-8"))
+        assert kazakh in payload["turns"][0]["message"]
     finally:
         trace.unlink(missing_ok=True)

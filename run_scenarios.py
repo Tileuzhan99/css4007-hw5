@@ -168,7 +168,15 @@ def run_scenario(scenario: dict[str, Any], *, dry_run: bool) -> dict[str, Any]:
 
         if not dry_run:
             completed = subprocess.run(
-                command, cwd=str(config.REPO_ROOT), capture_output=True, text=True
+                command,
+                cwd=str(config.REPO_ROOT),
+                capture_output=True,
+                text=True,
+                # app.py writes UTF-8. Without this, Python decodes the child's
+                # output with the console code page and a Kazakh reply lands in
+                # the log as mojibake.
+                encoding="utf-8",
+                errors="replace",
             )
             console += [completed.stdout.rstrip(), ""]
             if completed.stderr.strip():

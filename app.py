@@ -36,6 +36,23 @@ from dotenv import load_dotenv
 from helpdesk import config, data_access, memory, model as model_module, part1_graph
 
 
+def use_utf8_output() -> None:
+    """Print replies in any script, whatever the console's code page is.
+
+    A Windows console defaults to a legacy code page, so printing a Kazakh
+    reply raised UnicodeEncodeError and killed the process - which is exactly
+    the reply Part 3 is supposed to produce. The saved traces were already
+    UTF-8; only the console was not.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            try:
+                reconfigure(encoding="utf-8", errors="replace")
+            except (ValueError, OSError):  # pragma: no cover - not reconfigurable
+                pass
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="app.py",
@@ -221,6 +238,7 @@ def run_agent(
 
 
 def main(argv: list[str] | None = None) -> int:
+    use_utf8_output()
     load_dotenv()
     args = build_parser().parse_args(argv)
 
