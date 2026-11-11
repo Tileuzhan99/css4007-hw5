@@ -297,21 +297,162 @@ configured number of rounds.
 
 ### Model and provider
 
-<!-- FILL AFTER THE MODEL RUNS: provider, exact model id, and the date. -->
+**Provider:** Google (`google_genai`), through `langchain-google-genai==4.4.3`.
+**Runs made:** 11 November 2026.
+
+| Scenarios | Model |
+| --- | --- |
+| S06, S07, S08, S09, S10 | `gemini-3.5-flash` |
+| S11, S12, S13, S14 | `gemini-3.5-flash-lite` |
+
+Two models, and the reason is worth recording because it is a real constraint
+rather than a preference. The key available to me is on the Gemini free tier,
+which caps **generate-content requests per day per model** at 20. S06–S10 used
+that allowance for `gemini-3.5-flash`, and S11 then failed with
+`429 RESOURCE_EXHAUSTED … Quota exceeded … limit: 20 … Please retry in 17h2m`.
+The cap is counted per model, so the remaining four scenarios ran on
+`gemini-3.5-flash-lite`, which had its own allowance. Every saved trace records
+the provider and model it actually used (`"model"` in each
+`outputs/S*-run*.json`), and `outputs/scenario_index.json` lists them per run,
+so nothing here depends on remembering which was which.
+
+Choosing the model was not free either. `gemini-2.5-flash` is retired for new
+keys and answers with a 404 saying so. `gemini-3.8-flash` and
+`gemini-flash-latest` accept a `generateContent` request and then never answer
+it, so a run against them hangs instead of failing. `gemini-3-flash-preview`
+exists only on API version `v1beta`, while the adapter calls `v1` by default
+and gets a 404 — which is why `helpdesk/model.py` now takes
+`MODEL_API_VERSION`. `gemini-3.5-flash` was the newest model that both answered
+and supported tool calls.
+
+Both of those failures now produce one actionable line instead of a traceback:
+`helpdesk/model.py:explain_error()` recognises quota, not-found and credential
+errors, and `app.py` prints its sentence and exits 3.
+
+If the whole demonstration must come from one model, `python
+run_scenarios.py` re-runs all fourteen once a daily allowance is free, or with
+a key that has billing enabled.
 
 ### Direct calls to each tool, with no agent
 
-<!-- FILL AFTER THE MODEL RUNS (the direct-call evidence is already in
-     tests/test_tools.py; quote a short transcript here too). -->
+The tools are plain functions, so this needs no model at all:
+
+```python
+>>> from helpdesk import tools
+>>> tools.find_instructions("wifi")
+{'ok': True, 'topic': 'wifi', 'title': 'Connect to the practice campus network',
+ 'steps': ['Check that Wi-Fi is enabled and airplane mode is off.', ...],
+ 'instruction_id': 'GUIDE-WIFI', 'source': 'data/helpdesk.json'}
+
+>>> ctx = tools.SessionContext(user_id="demo-user-a", thread_id="t", status_profile="wifi_outage")
+>>> with tools.use_session(ctx):
+...     tools.check_service_status("wifi")
+{'ok': True, 'service': 'wifi', 'status': 'outage', 'is_operational': False,
+ 'message': 'The demo Wi-Fi service is unavailable across campus. ...',
+ 'status_profile': 'wifi_outage', 'source': 'data/service_status.json'}
+
+>>> with tools.use_session(ctx):
+...     tools.prepare_ticket(summary="", steps_tried=[])
+{'ok': False, 'error': 'missing_information',
+ 'missing': ['problem description', 'steps already tried'], ...}
+```
+
+`find_instructions` needs no session at all; the other two need one because
+they read the snapshot and the identifiers from it. The 41 tests in
+`tests/test_tools.py` are these same direct calls across all four snapshots and
+both topics, including the refusal and redaction paths.
 
 ### One run that uses more than one tool
 
-<!-- FILL AFTER THE MODEL RUNS: S06 - instructions, then status, then ticket. -->
+S06, two messages in one conversation. Full log: `outputs/S06.log.md`, trace:
+`outputs/S06-run1.json`.
+
+```text
+you> Show me the Wi-Fi troubleshooting steps.
+  [load_memory] user=demo-user-a thread=s06 user_memory={} learned=None history_before_turn=0
+  [call_model] requests tools: find_instructions({"topic": "wifi"})
+  [run_tools] find_instructions -> {"ok": true, "instruction_id": "GUIDE-WIFI"}
+  [call_model] answers without tools
+helpdesk> Here are the Wi-Fi troubleshooting steps from the stored guide ...
+
+you> I enabled Wi-Fi and forgot the saved network, but Campus-Demo still will not
+     connect. Check whether Wi-Fi is down. If it is operating, prepare a ticket
+     about this problem.
+  [load_memory] user=demo-user-a thread=s06 user_memory={} learned=None history_before_turn=4
+  [call_model] requests tools: check_service_status({"service": "wifi"})
+  [run_tools] check_service_status -> {"ok": true, "status": "operational"}
+  [call_model] requests tools: prepare_ticket({"summary": "Campus-Demo still will not connect",
+                                               "category": "wifi",
+                                               "steps_tried": ["enabled Wi-Fi",
+                                                               "forgot the saved network"]})
+  [run_tools] prepare_ticket -> {"ok": true, "path": "local-storage/tickets/TKT-1FF4F520.json"}
+  [call_model] answers without tools
+helpdesk> ... the Wi-Fi service is operational ... Since the Wi-Fi service is
+          operating, I have prepared a local ticket draft: TKT-1FF4F520 ...
+          This draft is stored locally only; no real ticket has been submitted.
+```
+
+Three tools across the two turns, and the second turn is two rounds: the
+`prepare_ticket` call is only made **after** the status result comes back, which
+is the point — the model's second action depends on the first tool's output, not
+on the wording of the request.
+
+The draft, committed at `outputs/tickets/TKT-1FF4F520.json`:
+
+```json
+{
+  "ticket_id": "TKT-1FF4F520", "status": "draft",
+  "user_id": "demo-user-a", "thread_id": "s06", "category": "wifi",
+  "summary": "Campus-Demo still will not connect",
+  "steps_tried": ["enabled Wi-Fi", "forgot the saved network"],
+  "service_status": "operational", "status_profile": "normal",
+  "reference_ids": ["GUIDE-WIFI"]
+}
+```
+
+`steps_tried` holds the two things the user said and nothing else — no invented
+troubleshooting. `user_id` and `thread_id` came from the session, not from the
+model's arguments.
 
 ### The same conditional request against three snapshots
 
-<!-- FILL AFTER THE MODEL RUNS: S06 (normal), S07 (wifi_outage),
-     S08 (status_unavailable), S14 (recovery_outage). -->
+Same conditional request ("check whether Wi-Fi is down; if it is operating,
+prepare a ticket"), three different snapshots, three different actions. Only
+`--profile` changed.
+
+| Scenario | Snapshot | Tool result | What the assistant did | Ticket? |
+| --- | --- | --- | --- | --- |
+| S06 | `normal` | `status: operational` | prepared the draft, because the condition held | yes — `TKT-1FF4F520` |
+| S07 | `wifi_outage` | `status: outage` | "Because Wi-Fi is down rather than operating, I did not prepare a ticket." | no |
+| S08 | `status_unavailable` | `status: unknown` | "the Wi-Fi status source is unavailable, so the status is currently unknown and I cannot determine whether Wi-Fi is operating. Because Wi-Fi is not confirmed to be operating, I did not prepare a ticket." | no |
+
+The S08 line is the one that matters: `unknown` was treated as *not confirmed
+operating* rather than as either an outage or an all-clear, and no repair time
+was invented in S07 (the fixture gives none).
+
+S14 changes the topic instead of the snapshot. The request is about the
+password-recovery page under `recovery_outage`, and the model looked up
+`account_recovery`, not `wifi`:
+
+```text
+  [call_model] requests tools: check_service_status({"service": "account_recovery"})
+  [run_tools] check_service_status -> {"ok": true, "status": "outage"}
+helpdesk> From the status snapshot, the account-recovery service is currently
+          experiencing a known outage.
+```
+
+That is the `topic_services` mapping in `data/helpdesk.json` being used, and it
+is checked independently of the model in
+`test_password_topic_maps_to_account_recovery`.
+
+**One difference from SCENARIOS.md, recorded as it happened.** For S08 the
+illustrative dialogue also *offers* a draft explaining that the status could not
+be checked ("Would you like a ticket draft …?"). My run declined correctly but
+did not make the offer. The brief says the exact wording need not match, so I
+have left the run as it is rather than re-running it to chase the phrasing; if I
+wanted the offer reliably, the right fix is a line in the system prompt telling
+the model what to propose when a status is `unknown`, not a change to the
+tools.
 
 ---
 
@@ -370,14 +511,37 @@ speaks.
 
 ### Demonstrations
 
-<!-- FILL AFTER THE MODEL RUNS: S10-S13. -->
-
 | Situation | Command used | Log file | What happened |
 | --- | --- | --- | --- |
-| Refer to an earlier message | | | |
-| Close, restart and resume | | | |
-| Same user, new conversation | | | |
-| Different user | | | |
+| Refer to an earlier message | `python app.py --user demo-user-a --thread s10 --profile normal --message "I cannot connect to Wi-Fi. I enabled it and forgot the saved network, but reconnecting failed." --message "Which steps did I already try?"` | `outputs/S10.log.md`, `S10-run1.json` | Second turn ran **no tool** and answered from the conversation: "you have already tried: 1. Enabling Wi-Fi 2. Forgetting the saved network 3. Attempting to reconnect". The trace shows `history_before_turn=5`. |
+| Close, restart and resume | two launches: `… --thread restart-a --message "Please remember that I prefer replies in Kazakh. My issue is Wi-Fi. I enabled it and tried reconnecting, but it still fails."` then, as a **new process**, `… --thread restart-a --message "Which problem and steps did we discuss?"` | `outputs/S11.log.md`, `S11-run1.json`, `S11-run2.json` | Second process started with `history_before_turn=6` although it was given one message, and answered in Kazakh that we discussed the Wi-Fi problem and the steps of enabling Wi-Fi and reconnecting. |
+| Same user, new conversation | `… --thread preference-a1 --message "Please remember that I prefer replies in Kazakh. I have a Wi-Fi problem."` then a new process with `--thread preference-a2 --message "Which language did I ask you to use? What can you help with?"` | `outputs/S12.log.md`, `S12-run1.json`, `S12-run2.json` | Second process: `history_before_turn=0` (a genuinely fresh conversation) but `user_memory={"reply_language": "Kazakh"}`. It answered "Қазақ тілін (saved user memory store дерекқоры бойынша)" — the language, and the store it came from. |
+| Different user | `… --user demo-user-a --thread isolation-a --message "Please remember that I prefer replies in Kazakh. …"` then `--user demo-user-b --thread isolation-b --message "Have I told you a preferred language or a previous problem?"` | `outputs/S13.log.md`, `S13-run1.json`, `S13-run2.json` | `demo-user-b` loaded `user_memory={}` and replied in English: "Nothing is recorded for this user. If you would like to note a preference … (Source: saved user memory)". No trace of `demo-user-a`'s Kazakh preference. |
+
+**What was read from where, per demonstration.** Every `load_memory` trace entry
+names its sources explicitly: `user_memory` with the store path,
+`conversation_messages_before_turn` for the checkpoint, and `learned_preference`
+when this message taught it something. Tool results name theirs
+(`source: data/helpdesk.json`, `source: data/service_status.json`). So in S12
+run 2 the reply came from user memory with an empty conversation; in S10 turn 2
+it came from the conversation with no tool call at all; and in S06 the steps came
+from the reference file.
+
+**The preference is learned, not configured.** In S11, S12 and S13 the first
+turn shows `learned=Kazakh` — the application saw the phrase in the message and
+wrote it. `data/demo_users.json` supplies no preference, and a test asserts the
+file has none to read.
+
+**One bug this actually caught.** The first attempt at S11–S13 failed
+*after* the graph had run and the state was saved: `app.py` printed the Kazakh
+reply to a Windows console whose code page cannot represent it, so `print()`
+raised `UnicodeEncodeError` and killed the process. The scenario runner had the
+same flaw in reverse — it decoded the child's UTF-8 output with the console code
+page, which would have written mojibake into these very logs. Both are fixed
+(`use_utf8_output()` in `app.py`, explicit `encoding="utf-8"` in the runner) and
+both now have regression tests in `tests/test_cli_restart.py`. It is worth
+noting because it is the one failure mode the in-process tests could never have
+found: the state was correct, and only the act of showing it crashed.
 
 ---
 
@@ -509,6 +673,12 @@ setup/CI work. `git log --oneline` in the repository.
 - **Conversation state grows without bound.** Every turn resends the whole
   thread, with no summarising or trimming, so a very long conversation would
   eventually hit the context window.
+- **The demonstration spans two models**, because of the free-tier per-model
+  daily cap described in Part 2. Each trace records which model produced it, but
+  a reader comparing S10 with S11 is comparing two models as well as two
+  scenarios.
+- **S08 declines without offering the alternative draft** that SCENARIOS.md
+  illustrates. The decision is right; the helpfulness is missing.
 - **`other_help` cannot help.** By design it only asks which of the two topics
   it is; a genuinely out-of-scope problem (S03's broken screen) gets no route to
   anything useful, which is the right behaviour for this fixture but not a real
@@ -528,12 +698,12 @@ console output and trace are in `outputs/`. S01–S05 need no API key.
 | S03 — Unsupported request | same, `--thread s03 --message "My laptop screen is broken."` | `outputs/S03.log.md`, `outputs/S03-run1.json` | `category=other`, route `read_request → other_help`. Asks whether it is Wi-Fi or a password rather than attempting an answer. Matched. |
 | S04 — Two topics before the graph change | `--graph part1 --thread s04 --message "My Wi-Fi password does not work."` | `outputs/S04.log.md`, `outputs/S04-run1.json` | `category=wifi`, route `read_request → wifi_help`: the Wi-Fi test runs first and returns, so `password` is never checked. The user asked about a password and got Wi-Fi steps. Matched my prediction — and it is the reason for the change below. |
 | S05 — Two topics after adding clarification | `--graph part1-clarify --thread s05 --message "My Wi-Fi password does not work."` | `outputs/S05.log.md`, `outputs/S05-run1.json` | `category=both`, route `read_request → clarify_problem`. Asks which problem to solve first. Different node *and* a category the first graph cannot produce — the behaviour changed, not just the wording. |
-| S06 — Instructions then local ticket | | | |
-| S07 — The same request during a Wi-Fi outage | | | |
-| S08 — Status source unavailable | | | |
-| S09 — Missing ticket details | | | |
-| S10 — Use the current conversation | | | |
-| S11 — Persist and recall after restart | | | |
-| S12 — Preference across threads without replay | | | |
-| S13 — Do not share memory between users | | | |
-| S14 — Password recovery outage | | | |
+| S06 — Instructions then local ticket | `python app.py --graph agent --user demo-user-a --thread s06 --profile normal --message "Show me the Wi-Fi troubleshooting steps." --message "I enabled Wi-Fi and forgot the saved network, but Campus-Demo still will not connect. Check whether Wi-Fi is down. If it is operating, prepare a ticket about this problem."` | `outputs/S06.log.md`, `S06-run1.json`, ticket `outputs/tickets/TKT-1FF4F520.json` | Turn 1: `find_instructions` → GUIDE-WIFI steps. Turn 2: `check_service_status` → `operational`, then `prepare_ticket` → draft `TKT-1FF4F520` with only the two steps the user named. Three tools, two rounds in turn 2. Nothing I would change. |
+| S07 — The same request during a Wi-Fi outage | same message as S06 turn 2, `--profile wifi_outage --thread s07` | `outputs/S07.log.md`, `S07-run1.json` | `check_service_status` → `outage`; no `prepare_ticket` call at all. "Because Wi-Fi is down rather than operating, I did not prepare a ticket." No repair time invented. Condition honoured. |
+| S08 — Status source unavailable | `--profile status_unavailable --thread s08 --message "Check whether Wi-Fi is down. If it is operating, prepare a ticket. I already enabled Wi-Fi and reconnected, with no success."` | `outputs/S08.log.md`, `S08-run1.json` | `status: unknown` → no ticket: "I cannot determine whether Wi-Fi is operating." `unknown` treated as a third answer, not an all-clear. **What I would change:** it should also offer a draft explaining that the status could not be checked, which needs a prompt line, not a tool change. |
+| S09 — Missing ticket details | `--thread s09 --message "Prepare a support ticket." --message "The issue is Wi-Fi. I enabled it and tried reconnecting, but it still fails."` | `outputs/S09.log.md`, `S09-run1.json`, ticket `outputs/tickets/TKT-C1A7A6B8.json` | Turn 1: `prepare_ticket` with empty arguments → `missing_information`, and the assistant asked for the problem description and the steps tried. Turn 2: draft from the user's own words. The draft records `service_status: "not_checked"` — no status was looked up and the ticket says so instead of guessing. |
+| S10 — Use the current conversation | `--thread s10 --message "I cannot connect to Wi-Fi. I enabled it and forgot the saved network, but reconnecting failed." --message "Which steps did I already try?"` | `outputs/S10.log.md`, `S10-run1.json` | Turn 1 asked for `find_instructions` and `check_service_status` **in one round** (parallel calls, both executed). Turn 2 used no tool and listed the three steps from the conversation. |
+| S11 — Persist and recall after restart | two separate processes, same `--thread restart-a`; commands in `outputs/S11.log.md` | `outputs/S11.log.md`, `S11-run1.json`, `S11-run2.json` | Process 2 was given one message and started from `history_before_turn=6`, then named the Wi-Fi problem and both steps — in Kazakh, from the preference learned in process 1. The old transcript was never passed on the command line. |
+| S12 — Preference across threads without replay | two processes, `--thread preference-a1` then `preference-a2`, same `--user demo-user-a` | `outputs/S12.log.md`, `S12-run1.json`, `S12-run2.json` | Thread 2: `history_before_turn=0` but `user_memory={"reply_language": "Kazakh"}`. Answered in Kazakh and named the user memory store as the source. Preference crosses threads; history does not. |
+| S13 — Do not share memory between users | `--user demo-user-a --thread isolation-a`, then `--user demo-user-b --thread isolation-b` | `outputs/S13.log.md`, `S13-run1.json`, `S13-run2.json` | `demo-user-b` loaded `user_memory={}` and said nothing is recorded for this user, in English. No leak of the other user's preference or problem. |
+| S14 — Password recovery outage | `--profile recovery_outage --thread s14 --message "My password recovery page is unavailable. Check the service status. Is there a known problem?"` | `outputs/S14.log.md`, `S14-run1.json` | Looked up `account_recovery`, not `wifi` → `outage`, and reported a known outage without inventing a repair time. The `topic_services` mapping doing its job. |

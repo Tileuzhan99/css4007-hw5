@@ -74,6 +74,22 @@ and whichever key is present is used (Anthropic is tried first):
 `MODEL_NAME` is optional; set it to use a different model from that provider.
 Only the adapter for the provider you configure is ever imported, so you do not
 need keys for the others.
+
+Two things to know if you use a Gemini key on the free tier, because both cost
+me time:
+
+- The free tier caps generate-content requests at **20 per day, per model**.
+  Running all nine model scenarios needs more than that, so either use a key
+  with billing enabled, run them in batches on different days, or change
+  `MODEL_NAME` between batches (the cap is counted per model). My own results
+  were produced in two batches on two models, and every trace records which.
+- `langchain-google-genai` calls API version `v1`. Some models are published
+  only on `v1beta` and answer a `v1` request with 404. Set
+  `MODEL_API_VERSION=v1beta` for those.
+
+A provider error comes back as one actionable line rather than a traceback:
+quota, unknown model and bad credentials are recognised in
+`helpdesk/model.py:explain_error()`, and the program exits 3.
 The model and provider actually used are recorded in every saved trace, and
 [SUBMISSION.md](SUBMISSION.md) states the one my results came from.
 

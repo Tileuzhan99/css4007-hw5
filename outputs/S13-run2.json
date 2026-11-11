@@ -1,0 +1,45 @@
+{
+  "graph": "agent",
+  "user_id": "demo-user-b",
+  "thread_id": "isolation-b",
+  "status_profile": "normal",
+  "model": {
+    "provider": "google_genai",
+    "model": "gemini-3.5-flash-lite",
+    "api_key_present": true
+  },
+  "turns": [
+    {
+      "user_id": "demo-user-b",
+      "thread_id": "isolation-b",
+      "status_profile": "normal",
+      "message": "Have I told you a preferred language or a previous problem?",
+      "reply": "Nothing is recorded for this user. If you would like to note a preference or an earlier problem, let me know and I can record it! (Source: saved user memory)",
+      "trace": [
+        {
+          "node": "load_memory",
+          "user_id": "demo-user-b",
+          "thread_id": "isolation-b",
+          "learned_preference": null,
+          "user_memory": {},
+          "source": "user memory (local-storage/user_memory.sqlite)",
+          "conversation_messages_before_turn": 0
+        },
+        {
+          "node": "call_model",
+          "model": "gemini-3.5-flash-lite",
+          "provider": "google_genai",
+          "messages_sent": 2,
+          "tool_calls_requested": [],
+          "text": "Nothing is recorded for this user. If you would like to note a preference or an earlier problem, let me know and I can record it! (Source: saved user memory)"
+        }
+      ],
+      "tool_calls": [],
+      "tickets": [],
+      "user_memory": {},
+      "tool_rounds": 0,
+      "loop_limit_reached": false,
+      "conversation_length": 2
+    }
+  ]
+}

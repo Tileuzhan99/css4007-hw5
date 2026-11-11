@@ -1,0 +1,150 @@
+{
+  "graph": "agent",
+  "user_id": "demo-user-a",
+  "thread_id": "isolation-a",
+  "status_profile": "normal",
+  "model": {
+    "provider": "google_genai",
+    "model": "gemini-3.5-flash-lite",
+    "api_key_present": true
+  },
+  "turns": [
+    {
+      "user_id": "demo-user-a",
+      "thread_id": "isolation-a",
+      "status_profile": "normal",
+      "message": "Please remember that I prefer replies in Kazakh. I have a Wi-Fi problem.",
+      "reply": "Салем! Пайдаланушы жадынан алынған деректер бойынша, сіздің қалауыңыз қазақ тілінде жауап беру. \n\nҚызмет күйінің снимкасы (status snapshot) мен `check_service_status` құралының деректері бойынша, Wi-Fi қызметі қазіргі уақытта жұмыс істеп тұр (\noperational).\n\nСақталған нұсқаулық бойынша Wi-Fi мәселелерін шешу қадамдары:\n1. Wi-Fi қосылғанын және ұшақ режимі (airplane mode) өшірулі екенін тексеріңіз.\n2. «Campus-Demo» желісін таңдаңыз.\n3. Егер қосылу сәтсіз болса, сақталған желіні ұмытып (forget network), қайта қосылып көріңіз.",
+      "trace": [
+        {
+          "node": "load_memory",
+          "user_id": "demo-user-a",
+          "thread_id": "isolation-a",
+          "learned_preference": "Kazakh",
+          "user_memory": {
+            "reply_language": "Kazakh"
+          },
+          "source": "user memory (local-storage/user_memory.sqlite)",
+          "conversation_messages_before_turn": 0
+        },
+        {
+          "node": "call_model",
+          "model": "gemini-3.5-flash-lite",
+          "provider": "google_genai",
+          "messages_sent": 2,
+          "tool_calls_requested": [
+            {
+              "name": "check_service_status",
+              "args": {
+                "service": "wifi"
+              }
+            }
+          ],
+          "text": ""
+        },
+        {
+          "node": "run_tools",
+          "tool": "check_service_status",
+          "args": {
+            "service": "wifi"
+          },
+          "result": {
+            "ok": true,
+            "service": "wifi",
+            "status": "operational",
+            "is_operational": true,
+            "message": "The demo Wi-Fi service has no reported outage.",
+            "status_profile": "normal",
+            "source": "data/service_status.json"
+          }
+        },
+        {
+          "node": "call_model",
+          "model": "gemini-3.5-flash-lite",
+          "provider": "google_genai",
+          "messages_sent": 4,
+          "tool_calls_requested": [
+            {
+              "name": "find_instructions",
+              "args": {
+                "topic": "wifi"
+              }
+            }
+          ],
+          "text": ""
+        },
+        {
+          "node": "run_tools",
+          "tool": "find_instructions",
+          "args": {
+            "topic": "wifi"
+          },
+          "result": {
+            "ok": true,
+            "topic": "wifi",
+            "title": "Connect to the practice campus network",
+            "steps": [
+              "Check that Wi-Fi is enabled and airplane mode is off.",
+              "Select the fictional Campus-Demo network.",
+              "If connection fails, forget the saved network and try connecting again.",
+              "If the problem remains, check the service status before preparing a ticket."
+            ],
+            "instruction_id": "GUIDE-WIFI",
+            "source": "data/helpdesk.json"
+          }
+        },
+        {
+          "node": "call_model",
+          "model": "gemini-3.5-flash-lite",
+          "provider": "google_genai",
+          "messages_sent": 6,
+          "tool_calls_requested": [],
+          "text": "Салем! Пайдаланушы жадынан алынған деректер бойынша, сіздің қалауыңыз қазақ тілінде жауап беру. \n\nҚызмет күйінің снимкасы (status snapshot) мен `check_service_status` құралының деректері бойынша, Wi-Fi қызметі қазіргі уақытта жұмыс істеп тұр (\noperational).\n\nСақталған нұсқаулық бойынша Wi-Fi мәселелерін шешу қадамдары:\n1. Wi-Fi қосылғанын және ұшақ режимі (airplane mode) өшірулі екенін тексеріңіз.\n2. «Campus-Demo» желісін таңдаңыз.\n3. Егер қосылу сәтсіз болса, сақталған желіні ұмытып (forget network), қайта қосылып көріңіз."
+        }
+      ],
+      "tool_calls": [
+        {
+          "tool": "check_service_status",
+          "args": {
+            "service": "wifi"
+          },
+          "result": {
+            "ok": true,
+            "service": "wifi",
+            "status": "operational",
+            "is_operational": true,
+            "message": "The demo Wi-Fi service has no reported outage.",
+            "status_profile": "normal",
+            "source": "data/service_status.json"
+          }
+        },
+        {
+          "tool": "find_instructions",
+          "args": {
+            "topic": "wifi"
+          },
+          "result": {
+            "ok": true,
+            "topic": "wifi",
+            "title": "Connect to the practice campus network",
+            "steps": [
+              "Check that Wi-Fi is enabled and airplane mode is off.",
+              "Select the fictional Campus-Demo network.",
+              "If connection fails, forget the saved network and try connecting again.",
+              "If the problem remains, check the service status before preparing a ticket."
+            ],
+            "instruction_id": "GUIDE-WIFI",
+            "source": "data/helpdesk.json"
+          }
+        }
+      ],
+      "tickets": [],
+      "user_memory": {
+        "reply_language": "Kazakh"
+      },
+      "tool_rounds": 2,
+      "loop_limit_reached": false,
+      "conversation_length": 6
+    }
+  ]
+}

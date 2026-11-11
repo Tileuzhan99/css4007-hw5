@@ -1,0 +1,49 @@
+{
+  "graph": "agent",
+  "user_id": "demo-user-a",
+  "thread_id": "restart-a",
+  "status_profile": "normal",
+  "model": {
+    "provider": "google_genai",
+    "model": "gemini-3.5-flash-lite",
+    "api_key_present": true
+  },
+  "turns": [
+    {
+      "user_id": "demo-user-a",
+      "thread_id": "restart-a",
+      "status_profile": "normal",
+      "message": "Which problem and steps did we discuss?",
+      "reply": "Осы сөкеттесу кезінде біз Wi-Fi мәселесін және сіз бұрын жасаған қадамдарды (Wi-Fi-ды қосу және қайта қосылуға әрекет жасау) талқыладық.",
+      "trace": [
+        {
+          "node": "load_memory",
+          "user_id": "demo-user-a",
+          "thread_id": "restart-a",
+          "learned_preference": null,
+          "user_memory": {
+            "reply_language": "Kazakh"
+          },
+          "source": "user memory (local-storage/user_memory.sqlite)",
+          "conversation_messages_before_turn": 6
+        },
+        {
+          "node": "call_model",
+          "model": "gemini-3.5-flash-lite",
+          "provider": "google_genai",
+          "messages_sent": 8,
+          "tool_calls_requested": [],
+          "text": "Осы сөкеттесу кезінде біз Wi-Fi мәселесін және сіз бұрын жасаған қадамдарды (Wi-Fi-ды қосу және қайта қосылуға әрекет жасау) талқыладық."
+        }
+      ],
+      "tool_calls": [],
+      "tickets": [],
+      "user_memory": {
+        "reply_language": "Kazakh"
+      },
+      "tool_rounds": 0,
+      "loop_limit_reached": false,
+      "conversation_length": 8
+    }
+  ]
+}

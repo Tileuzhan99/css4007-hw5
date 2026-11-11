@@ -1,0 +1,92 @@
+{
+  "graph": "agent",
+  "user_id": "demo-user-a",
+  "thread_id": "s08",
+  "status_profile": "status_unavailable",
+  "model": {
+    "provider": "google_genai",
+    "model": "gemini-3.5-flash",
+    "api_key_present": true
+  },
+  "turns": [
+    {
+      "user_id": "demo-user-a",
+      "thread_id": "s08",
+      "status_profile": "status_unavailable",
+      "message": "Check whether Wi-Fi is down. If it is operating, prepare a ticket. I already enabled Wi-Fi and reconnected, with no success.",
+      "reply": "According to the status snapshot, the Wi-Fi status source is unavailable, so the status is currently unknown and I cannot determine whether Wi-Fi is operating.\n\nBecause Wi-Fi is not confirmed to be operating, I did not prepare a ticket.",
+      "trace": [
+        {
+          "node": "load_memory",
+          "user_id": "demo-user-a",
+          "thread_id": "s08",
+          "learned_preference": null,
+          "user_memory": {},
+          "source": "user memory (local-storage/user_memory.sqlite)",
+          "conversation_messages_before_turn": 0
+        },
+        {
+          "node": "call_model",
+          "model": "gemini-3.5-flash",
+          "provider": "google_genai",
+          "messages_sent": 2,
+          "tool_calls_requested": [
+            {
+              "name": "check_service_status",
+              "args": {
+                "service": "wifi"
+              }
+            }
+          ],
+          "text": ""
+        },
+        {
+          "node": "run_tools",
+          "tool": "check_service_status",
+          "args": {
+            "service": "wifi"
+          },
+          "result": {
+            "ok": true,
+            "service": "wifi",
+            "status": "unknown",
+            "is_operational": null,
+            "message": "The demo Wi-Fi status source is unavailable.",
+            "status_profile": "status_unavailable",
+            "source": "data/service_status.json"
+          }
+        },
+        {
+          "node": "call_model",
+          "model": "gemini-3.5-flash",
+          "provider": "google_genai",
+          "messages_sent": 4,
+          "tool_calls_requested": [],
+          "text": "According to the status snapshot, the Wi-Fi status source is unavailable, so the status is currently unknown and I cannot determine whether Wi-Fi is operating.\n\nBecause Wi-Fi is not confirmed to be operating, I did not prepare a ticket."
+        }
+      ],
+      "tool_calls": [
+        {
+          "tool": "check_service_status",
+          "args": {
+            "service": "wifi"
+          },
+          "result": {
+            "ok": true,
+            "service": "wifi",
+            "status": "unknown",
+            "is_operational": null,
+            "message": "The demo Wi-Fi status source is unavailable.",
+            "status_profile": "status_unavailable",
+            "source": "data/service_status.json"
+          }
+        }
+      ],
+      "tickets": [],
+      "user_memory": {},
+      "tool_rounds": 1,
+      "loop_limit_reached": false,
+      "conversation_length": 4
+    }
+  ]
+}

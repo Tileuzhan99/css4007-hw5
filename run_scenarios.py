@@ -200,12 +200,94 @@ def run_scenario(scenario: dict[str, Any], *, dry_run: bool) -> dict[str, Any]:
     return record
 
 
+INDEX_NAME = "scenario_index.json"
+
+
+def write_index(records: list[dict[str, Any]]) -> Path:
+    """Merge these records into the index instead of replacing it.
+
+    Scenarios are often run in batches - the Part 1 ones need no key, and a
+    free-tier daily quota can force the rest into more than one go - so an
+    index that only ever held the newest batch would always be incomplete.
+    """
+    index_path = config.OUTPUTS_DIR / INDEX_NAME
+    existing: dict[str, dict[str, Any]] = {}
+    if index_path.exists():
+        try:
+            for entry in json.loads(index_path.read_text(encoding="utf-8")):
+                existing[entry["scenario"]] = entry
+        except (json.JSONDecodeError, KeyError, TypeError):
+            existing = {}
+
+    for record in records:
+        existing[record["scenario"]] = record
+
+    ordered = [existing[s["id"]] for s in data_access.scenarios() if s["id"] in existing]
+    index_path.parent.mkdir(parents=True, exist_ok=True)
+    index_path.write_text(json.dumps(ordered, indent=2, ensure_ascii=False), encoding="utf-8")
+    return index_path
+
+
+def reindex() -> list[dict[str, Any]]:
+    """Rebuild index entries from the traces already saved in outputs/.
+
+    Runs no scenario and calls no model. Entries rebuilt this way are marked
+    `rebuilt_from_trace`, because the exit code of the original process is not
+    observed here - only the trace it left behind.
+    """
+    rebuilt = []
+    for scenario in data_access.scenarios():
+        entries = []
+        for index, segment in enumerate(segments(scenario), start=1):
+            trace_path = config.OUTPUTS_DIR / f"{scenario['id']}-run{index}.json"
+            if not trace_path.exists():
+                continue
+            trace = json.loads(trace_path.read_text(encoding="utf-8"))
+            entries.append(
+                {
+                    "run": index,
+                    "after_restart": segment["after_restart"],
+                    "user_id": segment["user_id"],
+                    "thread_id": segment["thread_id"],
+                    "messages": segment["messages"],
+                    "command": pretty(command_for(scenario, segment, trace_path)),
+                    "trace_file": trace_path.name,
+                    "model": trace.get("model"),
+                    "rebuilt_from_trace": True,
+                }
+            )
+        if entries:
+            rebuilt.append(
+                {
+                    "scenario": scenario["id"],
+                    "title": scenario["title"],
+                    "part": scenario["part"],
+                    "status_profile": scenario["status_profile"],
+                    "graph": graph_for(scenario),
+                    "reset_before": scenario["reset_before"],
+                    "segments": entries,
+                }
+            )
+    return rebuilt
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run the supplied HW5 scenarios.")
     parser.add_argument("--only", nargs="*", metavar="ID", help="scenario ids, e.g. S01 S06")
     parser.add_argument("--part", type=int, choices=[1, 2, 3], help="only this part")
     parser.add_argument("--dry-run", action="store_true", help="print commands, run nothing")
+    parser.add_argument(
+        "--reindex",
+        action="store_true",
+        help="rebuild scenario_index.json from the traces already in outputs/, running nothing",
+    )
     args = parser.parse_args(argv)
+
+    if args.reindex:
+        records = reindex()
+        index_path = write_index(records)
+        print(f"rebuilt {len(records)} scenarios into {index_path.relative_to(config.REPO_ROOT)}")
+        return 0
 
     wanted = data_access.scenarios()
     if args.only:
@@ -223,10 +305,7 @@ def main(argv: list[str] | None = None) -> int:
         summary.append(run_scenario(scenario, dry_run=args.dry_run))
 
     if not args.dry_run:
-        index_path = config.OUTPUTS_DIR / "scenario_index.json"
-        index_path.write_text(
-            json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8"
-        )
+        index_path = write_index(summary)
         print(f"\nsummary written to {index_path.relative_to(config.REPO_ROOT)}")
 
         failed = [

@@ -90,6 +90,13 @@ def build_chat_model(**overrides: Any) -> Any:
         from langchain_google_genai import ChatGoogleGenerativeAI
 
         params = {"model": model_name()}
+        # The adapter talks to API version v1 by default, and not every Gemini
+        # model is published there - gemini-3-flash-preview, for instance, is
+        # v1beta only and answers a v1 request with 404. MODEL_API_VERSION lets
+        # a reader reach those without changing code.
+        api_version = os.environ.get("MODEL_API_VERSION")
+        if api_version:
+            params["api_version"] = api_version
         params.update(overrides)
         return ChatGoogleGenerativeAI(**params)
 
@@ -98,3 +105,47 @@ def build_chat_model(**overrides: Any) -> Any:
     params = {"model": model_name()}
     params.update(overrides)
     return ChatOpenAI(**params)
+
+
+def explain_error(exc: BaseException) -> str | None:
+    """Turn a provider error into one actionable line, or None if unrecognised.
+
+    Worth doing because the two failures a reader of this repository is most
+    likely to meet - a free-tier daily quota and a model that is not on the
+    default API version - both arrive as a long traceback that buries the one
+    sentence that matters.
+    """
+    text = str(exc)
+    name = model_name()
+
+    if "RESOURCE_EXHAUSTED" in text or "429" in text:
+        detail = ""
+        if "limit:" in text:
+            fragment = text.split("limit:", 1)[1].split(",")[0].strip()
+            detail = f" The reported limit is {fragment} requests."
+        return (
+            f"The provider refused the request: quota exhausted for {name!r}."
+            f"{detail} On a free tier this is usually a per-model daily cap, so "
+            "either wait for it to reset, set MODEL_NAME to another model (the "
+            "cap is counted per model), or use a key with billing enabled."
+        )
+
+    if "NOT_FOUND" in text or "404" in text:
+        hint = ""
+        if provider() == "google_genai":
+            hint = (
+                " If the model exists but is published on a different API "
+                "version, set MODEL_API_VERSION=v1beta."
+            )
+        return (
+            f"The provider does not serve {name!r} on this endpoint. Check "
+            f"MODEL_NAME against the models your key can reach.{hint}"
+        )
+
+    if "401" in text or "API key" in text or "api key" in text:
+        return (
+            f"The provider rejected the credentials for {provider()!r}. Check "
+            f"{API_KEY_VARIABLES[provider()]} in .env, or run set_key.ps1 again."
+        )
+
+    return None

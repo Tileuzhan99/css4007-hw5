@@ -211,7 +211,15 @@ def run_agent(
             model=model,
         ) as app:
             for message in messages:
-                turn = app.send(message)
+                try:
+                    turn = app.send(message)
+                except Exception as exc:  # a provider failure, not a bug here
+                    explanation = model_module.explain_error(exc)
+                    if explanation is None:
+                        raise
+                    print(f"\nyou> {message}")
+                    print(f"ERROR: {explanation}", file=sys.stderr)
+                    raise SystemExit(3)
                 print_agent_turn(turn)
                 turns.append(turn)
 

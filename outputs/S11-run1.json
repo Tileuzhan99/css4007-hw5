@@ -1,0 +1,150 @@
+{
+  "graph": "agent",
+  "user_id": "demo-user-a",
+  "thread_id": "restart-a",
+  "status_profile": "normal",
+  "model": {
+    "provider": "google_genai",
+    "model": "gemini-3.5-flash-lite",
+    "api_key_present": true
+  },
+  "turns": [
+    {
+      "user_id": "demo-user-a",
+      "thread_id": "restart-a",
+      "status_profile": "normal",
+      "message": "Please remember that I prefer replies in Kazakh. My issue is Wi-Fi. I enabled it and tried reconnecting, but it still fails.",
+      "reply": "Сақталған нұсқаулық пен қызмет күйі жүйесінен алынған деректерге сәйкес, Wi-Fi қызметі қазіргі уақытта жұмыс істеп тұр (ста\nтус: operational). \n\nСақталған нұсқаулықтағы келесі қадамды көріңіз:\n1. Сақталған желіні ұмытыңыз (\"forget the saved network\").\n2. Campus-Demo желісіне қайта қосылып көріңіз.",
+      "trace": [
+        {
+          "node": "load_memory",
+          "user_id": "demo-user-a",
+          "thread_id": "restart-a",
+          "learned_preference": "Kazakh",
+          "user_memory": {
+            "reply_language": "Kazakh"
+          },
+          "source": "user memory (local-storage/user_memory.sqlite)",
+          "conversation_messages_before_turn": 0
+        },
+        {
+          "node": "call_model",
+          "model": "gemini-3.5-flash-lite",
+          "provider": "google_genai",
+          "messages_sent": 2,
+          "tool_calls_requested": [
+            {
+              "name": "find_instructions",
+              "args": {
+                "topic": "wifi"
+              }
+            }
+          ],
+          "text": ""
+        },
+        {
+          "node": "run_tools",
+          "tool": "find_instructions",
+          "args": {
+            "topic": "wifi"
+          },
+          "result": {
+            "ok": true,
+            "topic": "wifi",
+            "title": "Connect to the practice campus network",
+            "steps": [
+              "Check that Wi-Fi is enabled and airplane mode is off.",
+              "Select the fictional Campus-Demo network.",
+              "If connection fails, forget the saved network and try connecting again.",
+              "If the problem remains, check the service status before preparing a ticket."
+            ],
+            "instruction_id": "GUIDE-WIFI",
+            "source": "data/helpdesk.json"
+          }
+        },
+        {
+          "node": "call_model",
+          "model": "gemini-3.5-flash-lite",
+          "provider": "google_genai",
+          "messages_sent": 4,
+          "tool_calls_requested": [
+            {
+              "name": "check_service_status",
+              "args": {
+                "service": "wifi"
+              }
+            }
+          ],
+          "text": ""
+        },
+        {
+          "node": "run_tools",
+          "tool": "check_service_status",
+          "args": {
+            "service": "wifi"
+          },
+          "result": {
+            "ok": true,
+            "service": "wifi",
+            "status": "operational",
+            "is_operational": true,
+            "message": "The demo Wi-Fi service has no reported outage.",
+            "status_profile": "normal",
+            "source": "data/service_status.json"
+          }
+        },
+        {
+          "node": "call_model",
+          "model": "gemini-3.5-flash-lite",
+          "provider": "google_genai",
+          "messages_sent": 6,
+          "tool_calls_requested": [],
+          "text": "Сақталған нұсқаулық пен қызмет күйі жүйесінен алынған деректерге сәйкес, Wi-Fi қызметі қазіргі уақытта жұмыс істеп тұр (ста\nтус: operational). \n\nСақталған нұсқаулықтағы келесі қадамды көріңіз:\n1. Сақталған желіні ұмытыңыз (\"forget the saved network\").\n2. Campus-Demo желісіне қайта қосылып көріңіз."
+        }
+      ],
+      "tool_calls": [
+        {
+          "tool": "find_instructions",
+          "args": {
+            "topic": "wifi"
+          },
+          "result": {
+            "ok": true,
+            "topic": "wifi",
+            "title": "Connect to the practice campus network",
+            "steps": [
+              "Check that Wi-Fi is enabled and airplane mode is off.",
+              "Select the fictional Campus-Demo network.",
+              "If connection fails, forget the saved network and try connecting again.",
+              "If the problem remains, check the service status before preparing a ticket."
+            ],
+            "instruction_id": "GUIDE-WIFI",
+            "source": "data/helpdesk.json"
+          }
+        },
+        {
+          "tool": "check_service_status",
+          "args": {
+            "service": "wifi"
+          },
+          "result": {
+            "ok": true,
+            "service": "wifi",
+            "status": "operational",
+            "is_operational": true,
+            "message": "The demo Wi-Fi service has no reported outage.",
+            "status_profile": "normal",
+            "source": "data/service_status.json"
+          }
+        }
+      ],
+      "tickets": [],
+      "user_memory": {
+        "reply_language": "Kazakh"
+      },
+      "tool_rounds": 2,
+      "loop_limit_reached": false,
+      "conversation_length": 6
+    }
+  ]
+}

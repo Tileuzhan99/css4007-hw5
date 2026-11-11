@@ -17,10 +17,10 @@
         ],
         "command": "python app.py --graph part1 --user demo-user-a --thread s01 --profile normal --message \"I cannot connect to Wi-Fi.\" --trace outputs/S01-run1.json",
         "trace_file": "S01-run1.json",
-        "exit_code": 0
+        "model": null,
+        "rebuilt_from_trace": true
       }
-    ],
-    "tickets": []
+    ]
   },
   {
     "scenario": "S02",
@@ -40,10 +40,10 @@
         ],
         "command": "python app.py --graph part1 --user demo-user-a --thread s02 --profile normal --message \"I forgot my PASSWORD.\" --trace outputs/S02-run1.json",
         "trace_file": "S02-run1.json",
-        "exit_code": 0
+        "model": null,
+        "rebuilt_from_trace": true
       }
-    ],
-    "tickets": []
+    ]
   },
   {
     "scenario": "S03",
@@ -63,10 +63,10 @@
         ],
         "command": "python app.py --graph part1 --user demo-user-a --thread s03 --profile normal --message \"My laptop screen is broken.\" --trace outputs/S03-run1.json",
         "trace_file": "S03-run1.json",
-        "exit_code": 0
+        "model": null,
+        "rebuilt_from_trace": true
       }
-    ],
-    "tickets": []
+    ]
   },
   {
     "scenario": "S04",
@@ -86,10 +86,10 @@
         ],
         "command": "python app.py --graph part1 --user demo-user-a --thread s04 --profile normal --message \"My Wi-Fi password does not work.\" --trace outputs/S04-run1.json",
         "trace_file": "S04-run1.json",
-        "exit_code": 0
+        "model": null,
+        "rebuilt_from_trace": true
       }
-    ],
-    "tickets": []
+    ]
   },
   {
     "scenario": "S05",
@@ -109,9 +109,306 @@
         ],
         "command": "python app.py --graph part1-clarify --user demo-user-a --thread s05 --profile normal --message \"My Wi-Fi password does not work.\" --trace outputs/S05-run1.json",
         "trace_file": "S05-run1.json",
-        "exit_code": 0
+        "model": null,
+        "rebuilt_from_trace": true
       }
-    ],
-    "tickets": []
+    ]
+  },
+  {
+    "scenario": "S06",
+    "title": "Instructions then local ticket",
+    "part": 2,
+    "status_profile": "normal",
+    "graph": "agent",
+    "reset_before": true,
+    "segments": [
+      {
+        "run": 1,
+        "after_restart": false,
+        "user_id": "demo-user-a",
+        "thread_id": "s06",
+        "messages": [
+          "Show me the Wi-Fi troubleshooting steps.",
+          "I enabled Wi-Fi and forgot the saved network, but Campus-Demo still will not connect. Check whether Wi-Fi is down. If it is operating, prepare a ticket about this problem."
+        ],
+        "command": "python app.py --graph agent --user demo-user-a --thread s06 --profile normal --message \"Show me the Wi-Fi troubleshooting steps.\" --message \"I enabled Wi-Fi and forgot the saved network, but Campus-Demo still will not connect. Check whether Wi-Fi is down. If it is operating, prepare a ticket about this problem.\" --trace outputs/S06-run1.json",
+        "trace_file": "S06-run1.json",
+        "model": {
+          "provider": "google_genai",
+          "model": "gemini-3.5-flash",
+          "api_key_present": true
+        },
+        "rebuilt_from_trace": true
+      }
+    ]
+  },
+  {
+    "scenario": "S07",
+    "title": "The same request during a Wi-Fi outage",
+    "part": 2,
+    "status_profile": "wifi_outage",
+    "graph": "agent",
+    "reset_before": true,
+    "segments": [
+      {
+        "run": 1,
+        "after_restart": false,
+        "user_id": "demo-user-a",
+        "thread_id": "s07",
+        "messages": [
+          "I enabled Wi-Fi and forgot the saved network, but Campus-Demo still will not connect. Check whether Wi-Fi is down. If it is operating, prepare a ticket about this problem."
+        ],
+        "command": "python app.py --graph agent --user demo-user-a --thread s07 --profile wifi_outage --message \"I enabled Wi-Fi and forgot the saved network, but Campus-Demo still will not connect. Check whether Wi-Fi is down. If it is operating, prepare a ticket about this problem.\" --trace outputs/S07-run1.json",
+        "trace_file": "S07-run1.json",
+        "model": {
+          "provider": "google_genai",
+          "model": "gemini-3.5-flash",
+          "api_key_present": true
+        },
+        "rebuilt_from_trace": true
+      }
+    ]
+  },
+  {
+    "scenario": "S08",
+    "title": "Status source unavailable",
+    "part": 2,
+    "status_profile": "status_unavailable",
+    "graph": "agent",
+    "reset_before": true,
+    "segments": [
+      {
+        "run": 1,
+        "after_restart": false,
+        "user_id": "demo-user-a",
+        "thread_id": "s08",
+        "messages": [
+          "Check whether Wi-Fi is down. If it is operating, prepare a ticket. I already enabled Wi-Fi and reconnected, with no success."
+        ],
+        "command": "python app.py --graph agent --user demo-user-a --thread s08 --profile status_unavailable --message \"Check whether Wi-Fi is down. If it is operating, prepare a ticket. I already enabled Wi-Fi and reconnected, with no success.\" --trace outputs/S08-run1.json",
+        "trace_file": "S08-run1.json",
+        "model": {
+          "provider": "google_genai",
+          "model": "gemini-3.5-flash",
+          "api_key_present": true
+        },
+        "rebuilt_from_trace": true
+      }
+    ]
+  },
+  {
+    "scenario": "S09",
+    "title": "Missing ticket details",
+    "part": 2,
+    "status_profile": "normal",
+    "graph": "agent",
+    "reset_before": true,
+    "segments": [
+      {
+        "run": 1,
+        "after_restart": false,
+        "user_id": "demo-user-a",
+        "thread_id": "s09",
+        "messages": [
+          "Prepare a support ticket.",
+          "The issue is Wi-Fi. I enabled it and tried reconnecting, but it still fails."
+        ],
+        "command": "python app.py --graph agent --user demo-user-a --thread s09 --profile normal --message \"Prepare a support ticket.\" --message \"The issue is Wi-Fi. I enabled it and tried reconnecting, but it still fails.\" --trace outputs/S09-run1.json",
+        "trace_file": "S09-run1.json",
+        "model": {
+          "provider": "google_genai",
+          "model": "gemini-3.5-flash",
+          "api_key_present": true
+        },
+        "rebuilt_from_trace": true
+      }
+    ]
+  },
+  {
+    "scenario": "S10",
+    "title": "Use the current conversation",
+    "part": 3,
+    "status_profile": "normal",
+    "graph": "agent",
+    "reset_before": true,
+    "segments": [
+      {
+        "run": 1,
+        "after_restart": false,
+        "user_id": "demo-user-a",
+        "thread_id": "s10",
+        "messages": [
+          "I cannot connect to Wi-Fi. I enabled it and forgot the saved network, but reconnecting failed.",
+          "Which steps did I already try?"
+        ],
+        "command": "python app.py --graph agent --user demo-user-a --thread s10 --profile normal --message \"I cannot connect to Wi-Fi. I enabled it and forgot the saved network, but reconnecting failed.\" --message \"Which steps did I already try?\" --trace outputs/S10-run1.json",
+        "trace_file": "S10-run1.json",
+        "model": {
+          "provider": "google_genai",
+          "model": "gemini-3.5-flash",
+          "api_key_present": true
+        },
+        "rebuilt_from_trace": true
+      }
+    ]
+  },
+  {
+    "scenario": "S11",
+    "title": "Persist and recall after restart",
+    "part": 3,
+    "status_profile": "normal",
+    "graph": "agent",
+    "reset_before": true,
+    "segments": [
+      {
+        "run": 1,
+        "after_restart": false,
+        "user_id": "demo-user-a",
+        "thread_id": "restart-a",
+        "messages": [
+          "Please remember that I prefer replies in Kazakh. My issue is Wi-Fi. I enabled it and tried reconnecting, but it still fails."
+        ],
+        "command": "python app.py --graph agent --user demo-user-a --thread restart-a --profile normal --message \"Please remember that I prefer replies in Kazakh. My issue is Wi-Fi. I enabled it and tried reconnecting, but it still fails.\" --trace outputs/S11-run1.json",
+        "trace_file": "S11-run1.json",
+        "model": {
+          "provider": "google_genai",
+          "model": "gemini-3.5-flash-lite",
+          "api_key_present": true
+        },
+        "rebuilt_from_trace": true
+      },
+      {
+        "run": 2,
+        "after_restart": true,
+        "user_id": "demo-user-a",
+        "thread_id": "restart-a",
+        "messages": [
+          "Which problem and steps did we discuss?"
+        ],
+        "command": "python app.py --graph agent --user demo-user-a --thread restart-a --profile normal --message \"Which problem and steps did we discuss?\" --trace outputs/S11-run2.json",
+        "trace_file": "S11-run2.json",
+        "model": {
+          "provider": "google_genai",
+          "model": "gemini-3.5-flash-lite",
+          "api_key_present": true
+        },
+        "rebuilt_from_trace": true
+      }
+    ]
+  },
+  {
+    "scenario": "S12",
+    "title": "Preference across threads without replay",
+    "part": 3,
+    "status_profile": "normal",
+    "graph": "agent",
+    "reset_before": true,
+    "segments": [
+      {
+        "run": 1,
+        "after_restart": false,
+        "user_id": "demo-user-a",
+        "thread_id": "preference-a1",
+        "messages": [
+          "Please remember that I prefer replies in Kazakh. I have a Wi-Fi problem."
+        ],
+        "command": "python app.py --graph agent --user demo-user-a --thread preference-a1 --profile normal --message \"Please remember that I prefer replies in Kazakh. I have a Wi-Fi problem.\" --trace outputs/S12-run1.json",
+        "trace_file": "S12-run1.json",
+        "model": {
+          "provider": "google_genai",
+          "model": "gemini-3.5-flash-lite",
+          "api_key_present": true
+        },
+        "rebuilt_from_trace": true
+      },
+      {
+        "run": 2,
+        "after_restart": true,
+        "user_id": "demo-user-a",
+        "thread_id": "preference-a2",
+        "messages": [
+          "Which language did I ask you to use? What can you help with?"
+        ],
+        "command": "python app.py --graph agent --user demo-user-a --thread preference-a2 --profile normal --message \"Which language did I ask you to use? What can you help with?\" --trace outputs/S12-run2.json",
+        "trace_file": "S12-run2.json",
+        "model": {
+          "provider": "google_genai",
+          "model": "gemini-3.5-flash-lite",
+          "api_key_present": true
+        },
+        "rebuilt_from_trace": true
+      }
+    ]
+  },
+  {
+    "scenario": "S13",
+    "title": "Do not share memory between users",
+    "part": 3,
+    "status_profile": "normal",
+    "graph": "agent",
+    "reset_before": true,
+    "segments": [
+      {
+        "run": 1,
+        "after_restart": false,
+        "user_id": "demo-user-a",
+        "thread_id": "isolation-a",
+        "messages": [
+          "Please remember that I prefer replies in Kazakh. I have a Wi-Fi problem."
+        ],
+        "command": "python app.py --graph agent --user demo-user-a --thread isolation-a --profile normal --message \"Please remember that I prefer replies in Kazakh. I have a Wi-Fi problem.\" --trace outputs/S13-run1.json",
+        "trace_file": "S13-run1.json",
+        "model": {
+          "provider": "google_genai",
+          "model": "gemini-3.5-flash-lite",
+          "api_key_present": true
+        },
+        "rebuilt_from_trace": true
+      },
+      {
+        "run": 2,
+        "after_restart": false,
+        "user_id": "demo-user-b",
+        "thread_id": "isolation-b",
+        "messages": [
+          "Have I told you a preferred language or a previous problem?"
+        ],
+        "command": "python app.py --graph agent --user demo-user-b --thread isolation-b --profile normal --message \"Have I told you a preferred language or a previous problem?\" --trace outputs/S13-run2.json",
+        "trace_file": "S13-run2.json",
+        "model": {
+          "provider": "google_genai",
+          "model": "gemini-3.5-flash-lite",
+          "api_key_present": true
+        },
+        "rebuilt_from_trace": true
+      }
+    ]
+  },
+  {
+    "scenario": "S14",
+    "title": "Password recovery outage",
+    "part": 2,
+    "status_profile": "recovery_outage",
+    "graph": "agent",
+    "reset_before": true,
+    "segments": [
+      {
+        "run": 1,
+        "after_restart": false,
+        "user_id": "demo-user-a",
+        "thread_id": "s14",
+        "messages": [
+          "My password recovery page is unavailable. Check the service status. Is there a known problem?"
+        ],
+        "command": "python app.py --graph agent --user demo-user-a --thread s14 --profile recovery_outage --message \"My password recovery page is unavailable. Check the service status. Is there a known problem?\" --trace outputs/S14-run1.json",
+        "trace_file": "S14-run1.json",
+        "model": {
+          "provider": "google_genai",
+          "model": "gemini-3.5-flash-lite",
+          "api_key_present": true
+        },
+        "rebuilt_from_trace": true
+      }
+    ]
   }
 ]

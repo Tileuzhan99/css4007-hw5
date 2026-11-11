@@ -1,0 +1,49 @@
+{
+  "graph": "agent",
+  "user_id": "demo-user-a",
+  "thread_id": "preference-a2",
+  "status_profile": "normal",
+  "model": {
+    "provider": "google_genai",
+    "model": "gemini-3.5-flash-lite",
+    "api_key_present": true
+  },
+  "turns": [
+    {
+      "user_id": "demo-user-a",
+      "thread_id": "preference-a2",
+      "status_profile": "normal",
+      "message": "Which language did I ask you to use? What can you help with?",
+      "reply": "Қазақ тілін (saved user memory store дерекқоры бойынша).\n\nМен университеттегі оқу-әдістемелік IT анықтамалық қызметінің көмекшісі ретінде Wi-Fi мәселелері және құпиясөз/аккаунтты қалпына келтіру мәселелері бойынша көмектесе аламын.",
+      "trace": [
+        {
+          "node": "load_memory",
+          "user_id": "demo-user-a",
+          "thread_id": "preference-a2",
+          "learned_preference": null,
+          "user_memory": {
+            "reply_language": "Kazakh"
+          },
+          "source": "user memory (local-storage/user_memory.sqlite)",
+          "conversation_messages_before_turn": 0
+        },
+        {
+          "node": "call_model",
+          "model": "gemini-3.5-flash-lite",
+          "provider": "google_genai",
+          "messages_sent": 2,
+          "tool_calls_requested": [],
+          "text": "Қазақ тілін (saved user memory store дерекқоры бойынша).\n\nМен университеттегі оқу-әдістемелік IT анықтамалық қызметінің көмекшісі ретінде Wi-Fi мәселелері және құпиясөз/аккаунтты қалпына келтіру мәселелері бойынша көмектесе аламын."
+        }
+      ],
+      "tool_calls": [],
+      "tickets": [],
+      "user_memory": {
+        "reply_language": "Kazakh"
+      },
+      "tool_rounds": 0,
+      "loop_limit_reached": false,
+      "conversation_length": 2
+    }
+  ]
+}

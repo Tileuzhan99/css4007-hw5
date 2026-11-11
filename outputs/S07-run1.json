@@ -1,0 +1,92 @@
+{
+  "graph": "agent",
+  "user_id": "demo-user-a",
+  "thread_id": "s07",
+  "status_profile": "wifi_outage",
+  "model": {
+    "provider": "google_genai",
+    "model": "gemini-3.5-flash",
+    "api_key_present": true
+  },
+  "turns": [
+    {
+      "user_id": "demo-user-a",
+      "thread_id": "s07",
+      "status_profile": "wifi_outage",
+      "message": "I enabled Wi-Fi and forgot the saved network, but Campus-Demo still will not connect. Check whether Wi-Fi is down. If it is operating, prepare a ticket about this problem.",
+      "reply": "According to the status snapshot, Wi-Fi is currently experiencing a campus-wide outage. \n\nBecause Wi-Fi is down rather than operating, I did not prepare a ticket.",
+      "trace": [
+        {
+          "node": "load_memory",
+          "user_id": "demo-user-a",
+          "thread_id": "s07",
+          "learned_preference": null,
+          "user_memory": {},
+          "source": "user memory (local-storage/user_memory.sqlite)",
+          "conversation_messages_before_turn": 0
+        },
+        {
+          "node": "call_model",
+          "model": "gemini-3.5-flash",
+          "provider": "google_genai",
+          "messages_sent": 2,
+          "tool_calls_requested": [
+            {
+              "name": "check_service_status",
+              "args": {
+                "service": "wifi"
+              }
+            }
+          ],
+          "text": ""
+        },
+        {
+          "node": "run_tools",
+          "tool": "check_service_status",
+          "args": {
+            "service": "wifi"
+          },
+          "result": {
+            "ok": true,
+            "service": "wifi",
+            "status": "outage",
+            "is_operational": false,
+            "message": "The demo Wi-Fi service is unavailable across campus. The fixture gives no repair time.",
+            "status_profile": "wifi_outage",
+            "source": "data/service_status.json"
+          }
+        },
+        {
+          "node": "call_model",
+          "model": "gemini-3.5-flash",
+          "provider": "google_genai",
+          "messages_sent": 4,
+          "tool_calls_requested": [],
+          "text": "According to the status snapshot, Wi-Fi is currently experiencing a campus-wide outage. \n\nBecause Wi-Fi is down rather than operating, I did not prepare a ticket."
+        }
+      ],
+      "tool_calls": [
+        {
+          "tool": "check_service_status",
+          "args": {
+            "service": "wifi"
+          },
+          "result": {
+            "ok": true,
+            "service": "wifi",
+            "status": "outage",
+            "is_operational": false,
+            "message": "The demo Wi-Fi service is unavailable across campus. The fixture gives no repair time.",
+            "status_profile": "wifi_outage",
+            "source": "data/service_status.json"
+          }
+        }
+      ],
+      "tickets": [],
+      "user_memory": {},
+      "tool_rounds": 1,
+      "loop_limit_reached": false,
+      "conversation_length": 4
+    }
+  ]
+}

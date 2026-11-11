@@ -1,0 +1,17 @@
+{
+  "ticket_id": "TKT-C1A7A6B8",
+  "status": "draft",
+  "user_id": "demo-user-a",
+  "thread_id": "s09",
+  "category": "wifi",
+  "summary": "Wi-Fi fails to connect",
+  "steps_tried": [
+    "enabled Wi-Fi",
+    "tried reconnecting"
+  ],
+  "service_status": "not_checked",
+  "status_profile": "normal",
+  "reference_ids": [
+    "GUIDE-WIFI"
+  ]
+}
