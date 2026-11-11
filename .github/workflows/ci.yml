@@ -1,0 +1,35 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run the test suite
+        # No model API key is configured for CI on purpose. Every test either
+        # avoids the model entirely or uses helpdesk.fake_model, so a test that
+        # started making real calls would fail here instead of billing someone.
+        env:
+          HELPDESK_STORAGE_DIR: ci-storage
+        run: python -m pytest -v
+
+      - name: Part 1 scenarios need no API key either
+        run: |
+          python run_scenarios.py --part 1
+          test -f outputs/S05-run1.json
