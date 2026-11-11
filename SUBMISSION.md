@@ -358,7 +358,7 @@ The tools are plain functions, so this needs no model at all:
 ```
 
 `find_instructions` needs no session at all; the other two need one because
-they read the snapshot and the identifiers from it. The 41 tests in
+they read the snapshot and the identifiers from it. The 31 tests in
 `tests/test_tools.py` are these same direct calls across all four snapshots and
 both topics, including the refusal and redaction paths.
 
@@ -578,7 +578,7 @@ different rows.
 
 ### Tests, and what each would catch
 
-`python -m pytest -v` — **100 tests, no API key, no network.** Every test gets a
+`python -m pytest -v` — **102 tests, no API key, no network** (22 routing + 31 tools + 19 memory + 19 agent + 11 CLI). Every test gets a
 throwaway storage directory, and the fixture deletes `ANTHROPIC_API_KEY` from the
 environment so a test that started making real calls would fail loudly instead
 of billing anyone.

@@ -192,7 +192,7 @@ they can be committed and read; they contain invented demo data only.
 python -m pytest -v
 ```
 
-100 tests, no API key, no network. Each test gets its own throwaway storage
+102 tests, no API key, no network. Each test gets its own throwaway storage
 directory, and the fixture deletes `ANTHROPIC_API_KEY` from the environment so a
 test that started making real calls would fail loudly instead of billing anyone.
 
