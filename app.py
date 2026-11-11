@@ -63,6 +63,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--trace", metavar="PATH", help="write the run as JSON to this file")
     parser.add_argument(
+        "--fake",
+        action="store_true",
+        help=(
+            "run the agent graph with a scripted fake model instead of a real one. "
+            "It gives no helpdesk advice; it only reports what the process can see, "
+            "so the graph, storage and restart wiring can be checked without a key."
+        ),
+    )
+    parser.add_argument(
         "--reset-memory",
         action="store_true",
         help="delete all conversation checkpoints and user preferences, then exit",
@@ -164,8 +173,16 @@ def run_agent(
     thread_id: str,
     status_profile: str,
     interactive: bool,
+    fake: bool = False,
 ) -> list[dict[str, Any]]:
     from helpdesk.agent_graph import HelpdeskApp
+
+    model = None
+    if fake:
+        from helpdesk.fake_model import EchoStateModel
+
+        model = EchoStateModel()
+        print("NOTE: --fake is a pipeline check with a fake model, not a real run.")
 
     turns: list[dict[str, Any]] = []
     with memory.conversation_checkpointer() as checkpointer:
@@ -174,6 +191,7 @@ def run_agent(
             thread_id=thread_id,
             status_profile=status_profile,
             checkpointer=checkpointer,
+            model=model,
         ) as app:
             for message in messages:
                 turn = app.send(message)
@@ -242,6 +260,7 @@ def main(argv: list[str] | None = None) -> int:
             thread_id=args.thread,
             status_profile=args.profile,
             interactive=not messages,
+            fake=args.fake,
         )
 
     if args.trace:
@@ -252,7 +271,13 @@ def main(argv: list[str] | None = None) -> int:
             "user_id": args.user,
             "thread_id": args.thread,
             "status_profile": args.profile,
-            "model": model_module.describe() if args.graph == "agent" else None,
+            "model": (
+                {"provider": "fake", "model": "EchoStateModel", "pipeline_check_only": True}
+                if args.fake
+                else model_module.describe()
+            )
+            if args.graph == "agent"
+            else None,
             "turns": turns,
         }
         path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")

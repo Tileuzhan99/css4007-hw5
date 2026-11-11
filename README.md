@@ -57,10 +57,12 @@ python -m pip install -r requirements.txt
 **Part 1 needs no key at all.** Parts 2 and 3 need one tool-capable model.
 
 ```powershell
-Copy-Item .env.example .env
+.\set_key.ps1            # OpenAI  (or: .\set_key.ps1 anthropic)
 ```
 
-Then edit `.env`. Pick a provider by setting `MODEL_PROVIDER`, or leave it blank
+`set_key.ps1` asks for the key with hidden input, writes it to `.env` and then
+checks that the key and model work. The key is never printed. To do it by hand
+instead, `Copy-Item .env.example .env` and edit the file. Pick a provider by setting `MODEL_PROVIDER`, or leave it blank
 and whichever key is present is used (Anthropic is tried first):
 
 | `MODEL_PROVIDER` | Key variable | Default `MODEL_NAME` |
@@ -117,6 +119,7 @@ python app.py --user demo-user-a --thread chat --profile normal
 | `--profile` | Status snapshot: `normal`, `wifi_outage`, `recovery_outage`, `status_unavailable` |
 | `--graph` | `agent` (default), `part1`, `part1-clarify` |
 | `--message` | One message; repeat it for several turns in the same process |
+| `--fake` | Run the graph with a fake model instead of a real one — no key, no network. It gives no helpdesk advice, only reports what the process can see, for checking the graph/storage/restart wiring. |
 | `--trace PATH` | Write the whole run as JSON |
 | `--reset-memory` | Delete all stored conversations and preferences, then exit |
 | `--show-storage` | Print the storage paths and exit |
@@ -170,7 +173,7 @@ they can be committed and read; they contain invented demo data only.
 python -m pytest -v
 ```
 
-91 tests, no API key, no network. Each test gets its own throwaway storage
+100 tests, no API key, no network. Each test gets its own throwaway storage
 directory, and the fixture deletes `ANTHROPIC_API_KEY` from the environment so a
 test that started making real calls would fail loudly instead of billing anyone.
 
@@ -180,6 +183,12 @@ test that started making real calls would fail loudly instead of billing anyone.
 | `tests/test_tools.py` | The three tools called directly | A tool that stopped reading the fixtures, `unknown` status collapsing into operational or outage, `password` no longer mapping to `account_recovery`, a ticket inventing missing details, a credential reaching a saved draft |
 | `tests/test_memory.py` | Preference learning, the store, checkpoints, reset | A preference not learned from the message, memory keyed per thread instead of per user, one user's memory leaking to another, a store that lost everything on restart |
 | `tests/test_agent_fake.py` | The model/tool graph via `fake_model` | A graph that answers without running the tool, a tool result never returning to the model, a missing round limit, user memory not reaching the model, a conversation that does not resume, threads or users sharing state |
+| `tests/test_cli_restart.py` | `app.py` launched as **real separate processes** against one storage directory | A checkpointer that only ever lived in memory, state written under a key a restart does not look up, a preference stored per thread instead of per user, memory bleeding across `--user`, `--thread` not separating conversations |
+
+`tests/test_cli_restart.py` is the one that proves a *restart* works: the other
+tests share a single Python process, so they can show the checkpointer
+round-trips through SQLite but not that a relaunched program picks the
+conversation back up.
 
 The real-model demonstration is deliberately separate: it lives in
 `run_scenarios.py` and in the committed `outputs/` logs, not in the test suite.

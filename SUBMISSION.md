@@ -414,7 +414,7 @@ different rows.
 
 ### Tests, and what each would catch
 
-`python -m pytest -v` — **91 tests, no API key, no network.** Every test gets a
+`python -m pytest -v` — **100 tests, no API key, no network.** Every test gets a
 throwaway storage directory, and the fixture deletes `ANTHROPIC_API_KEY` from the
 environment so a test that started making real calls would fail loudly instead
 of billing anyone.
@@ -425,13 +425,27 @@ of billing anyone.
 | `tests/test_tools.py` | each tool called directly, all four snapshots, the refusal path, redaction, the signatures | a tool that stopped reading the fixtures; `unknown` status collapsing into operational or outage; `password` no longer mapping to `account_recovery`; a ticket inventing missing details; a credential reaching a saved draft; the snapshot or user id becoming a model-supplied argument |
 | `tests/test_memory.py` | preference detection and its false positives, the store, isolation, reopening, reset | a preference no longer learned from the message; memory keyed per thread instead of per user (so every new conversation forgets it); one user's memory visible to another; a store that kept everything in RAM and lost it on restart; a reset that wiped the wrong file |
 | `tests/test_agent_fake.py` | the Part 2/3 graph driven by `helpdesk/fake_model.py` | a graph that answers without ever running the requested tool; a tool result that never returns to the model; a missing round limit (an endless loop in production); user memory not reaching the model; a conversation that does not resume from its checkpoint; threads or users sharing state they should not |
+| `tests/test_cli_restart.py` | `app.py` launched as **real separate processes** against one storage directory | a checkpointer that only ever lived in memory; state written under a key a restart does not look up; a preference stored per thread instead of per user; memory bleeding across `--user`; `--thread` not separating conversations; the CLI rejecting a valid snapshot name |
 
 **Which runs use a fake model.** All of them. `helpdesk/fake_model.py` is a
 scripted stand-in implementing only what the graph uses — `bind_tools()` and
 `invoke()` — and returning the tool calls its script specifies. That is what
 lets CI check the routing, the tools, the round limit and the memory wiring for
-free. `AlwaysToolsModel` is a second fake whose only job is to never stop asking
-for tools, which is how the round limit is proved.
+free. There are three fakes, each for one job: `FakeToolModel` replays a script
+of turns; `AlwaysToolsModel` never stops asking for a tool, which is how the
+round limit is proved; and `EchoStateModel` reports what a process can see,
+which is how a restart is proved from the outside. `app.py --fake` uses the
+last one and labels its own output as a pipeline check, so a fake run can never
+be mistaken for a result.
+
+**Why a subprocess test exists at all.** `tests/test_agent_fake.py` opens and
+closes the checkpointer around separate `HelpdeskApp` objects, which proves the
+state goes through SQLite — but both halves share one Python process, so a bug
+that only appears when the interpreter actually exits would survive it.
+`tests/test_cli_restart.py` launches `python app.py` twice as separate
+processes with nothing passed between them but the storage directory, and
+asserts the second launch sees two user messages where only one was given to it.
+That is the same thing `restart_process` means in `data/scenarios.json`.
 
 **The real-model demonstration is kept separate** — it is `run_scenarios.py`
 plus the committed `outputs/` logs, not part of the test suite. The test suite

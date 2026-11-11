@@ -9,9 +9,10 @@ against the real model and is kept separate (see README).
 
 from __future__ import annotations
 
+import re
 from typing import Any, Iterable
 
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 
 class FakeToolModel:
@@ -95,3 +96,48 @@ class AlwaysToolsModel(FakeToolModel):
                 }
             ],
         )
+
+
+class EchoStateModel(FakeToolModel):
+    """Reports what it can see, and nothing else.
+
+    Not a helpdesk: it gives no advice and requests no tools. Its only job is to
+    make the state of a running process observable from the outside, so a test
+    can launch real `python app.py` processes and check that the second one
+    resumed the conversation and loaded the right user's memory. Used by
+    `app.py --fake`, which is labelled as a pipeline check in its own output.
+    """
+
+    def invoke(self, messages: list[Any], **_: Any) -> AIMessage:
+        self.requests.append(list(messages))
+        humans = [m for m in messages if isinstance(m, HumanMessage)]
+        remembered = _saved_memory_block(messages)
+        return AIMessage(
+            content=(
+                "[fake model - pipeline check only] "
+                f"human_messages_seen={len(humans)} "
+                f"user_memory={remembered}"
+            )
+        )
+
+
+def _saved_memory_block(messages: list[Any]) -> dict[str, str]:
+    """Pull the saved-user-memory lines out of the system prompt."""
+    for message in messages:
+        if not isinstance(message, SystemMessage):
+            continue
+        text = message.content if isinstance(message.content, str) else str(message.content)
+        marker = "Saved user memory for this user"
+        start = text.find(marker)
+        if start < 0:
+            continue
+        found = {}
+        for line in text[start:].splitlines()[1:]:
+            stripped = line.strip()
+            if not stripped.startswith("- "):
+                break
+            match = re.match(r"-\s+(\S+):\s+(.+)", stripped)
+            if match:
+                found[match.group(1)] = match.group(2).strip()
+        return found
+    return {}
