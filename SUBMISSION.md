@@ -225,7 +225,7 @@ recovery code or API key is redacted before the draft is written.
 
 ```text
   START ──▶ load_memory ──▶ call_model ──┐
-                               ▲         │  route_after_model(state)
+                               ▲         │  _route_after_model(state)
                                │         │
                                │    ┌────┴─────────────────┬──────────────┐
                                │    │ reply has tool_calls │  no tool_    │
@@ -245,7 +245,7 @@ recovery code or API key is redacted before the draft is written.
   model either asks for more tools or answers.
 
 **1. How does the graph decide between running a tool and ending with an
-answer?** `route_after_model` looks at the message `call_model` just produced.
+answer?** `_route_after_model` looks at the message `call_model` just produced.
 No `tool_calls` on it → return `END`, the turn is over. Tool calls present →
 `run_tools`. It is a conditional edge, exactly like Part 1's, but the value it
 branches on comes from the model's output instead of from my `classify()`.
@@ -272,10 +272,10 @@ code and the same input always takes the same path. Here the number of nodes
 visited depends on what the model decides, and the same message can take a
 different path on a different day. The *shape* of what can happen is still mine:
 the model can only pick from three tools, with arguments matching their schemas,
-and only for as many rounds as `route_after_model` allows. I moved from
+and only for as many rounds as `_route_after_model` allows. I moved from
 specifying the path to specifying the space of allowed paths.
 
-**Where the loop limit is enforced.** In `route_after_model`, not in the prompt:
+**Where the loop limit is enforced.** In `_route_after_model`, not in the prompt:
 
 ```python
 if not getattr(last, "tool_calls", None):
