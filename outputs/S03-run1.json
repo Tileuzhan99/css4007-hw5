@@ -1,0 +1,50 @@
+{
+  "graph": "part1",
+  "user_id": "demo-user-a",
+  "thread_id": "s03",
+  "status_profile": "normal",
+  "model": null,
+  "turns": [
+    {
+      "graph": "part1",
+      "message": "My laptop screen is broken.",
+      "route": [
+        "read_request",
+        "other_help"
+      ],
+      "category": "other",
+      "reply": "I can only help with Wi-Fi or password problems here. Does your problem concern Wi-Fi or a password? (This demo helpdesk covers: Wi-Fi troubleshooting, Password recovery guidance, Service status lookup, Preparing local ticket drafts.)",
+      "trace": [
+        {
+          "node": "read_request",
+          "read": {
+            "message": "My laptop screen is broken."
+          },
+          "wrote": {
+            "category": "other"
+          },
+          "state_after": {
+            "message": "My laptop screen is broken.",
+            "category": "other",
+            "reply": ""
+          }
+        },
+        {
+          "node": "other_help",
+          "read": {
+            "category": "other",
+            "source": "data/helpdesk.json"
+          },
+          "wrote": {
+            "reply": "I can only help with Wi-Fi or password problems here. Does your problem concern Wi-Fi or a password? (This demo helpdesk covers: Wi-Fi troubleshooting, Password recovery guidance, Service status lookup, Preparing local ticket drafts.)"
+          },
+          "state_after": {
+            "message": "My laptop screen is broken.",
+            "category": "other",
+            "reply": "I can only help with Wi-Fi or password problems here. Does your problem concern Wi-Fi or a password? (This demo helpdesk covers: Wi-Fi troubleshooting, Password recovery guidance, Service status lookup, Preparing local ticket drafts.)"
+          }
+        }
+      ]
+    }
+  ]
+}

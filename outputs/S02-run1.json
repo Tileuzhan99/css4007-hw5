@@ -1,0 +1,52 @@
+{
+  "graph": "part1",
+  "user_id": "demo-user-a",
+  "thread_id": "s02",
+  "status_profile": "normal",
+  "model": null,
+  "turns": [
+    {
+      "graph": "part1",
+      "message": "I forgot my PASSWORD.",
+      "route": [
+        "read_request",
+        "password_help"
+      ],
+      "category": "password",
+      "reply": "Recover access to the practice account (GUIDE-PASSWORD):\n  1. Open the practice sign-in screen and choose Forgot password.\n  2. Follow the recovery instructions shown by the practice application.\n  3. If recovery is unavailable, prepare a ticket describing the error.\n  4. Never include a password or recovery code in a ticket.",
+      "trace": [
+        {
+          "node": "read_request",
+          "read": {
+            "message": "I forgot my PASSWORD."
+          },
+          "wrote": {
+            "category": "password"
+          },
+          "state_after": {
+            "message": "I forgot my PASSWORD.",
+            "category": "password",
+            "reply": ""
+          }
+        },
+        {
+          "node": "password_help",
+          "read": {
+            "category": "password",
+            "source": "data/helpdesk.json"
+          },
+          "wrote": {
+            "reply": "Recover access to the practice account (GUIDE-PASSWORD):\n  1. Open the practice sign-in screen and choose Forgot password.\n  2. Follow the recovery instructions shown by the practice application.\n  3. If recovery is unavailable, prepare a ticket describing the error.\n  4. Never include a password or recovery code in a ticket.",
+            "instruction_id": "GUIDE-PASSWORD"
+          },
+          "state_after": {
+            "message": "I forgot my PASSWORD.",
+            "category": "password",
+            "reply": "Recover access to the practice account (GUIDE-PASSWORD):\n  1. Open the practice sign-in screen and choose Forgot password.\n  2. Follow the recovery instructions shown by the practice application.\n  3. If recovery is unavailable, prepare a ticket describing the error.\n  4. Never include a password or recovery code in a ticket.",
+            "instruction_id": "GUIDE-PASSWORD"
+          }
+        }
+      ]
+    }
+  ]
+}

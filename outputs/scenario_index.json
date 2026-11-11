@@ -1,0 +1,117 @@
+[
+  {
+    "scenario": "S01",
+    "title": "Simple Wi-Fi route",
+    "part": 1,
+    "status_profile": "normal",
+    "graph": "part1",
+    "reset_before": true,
+    "segments": [
+      {
+        "run": 1,
+        "after_restart": false,
+        "user_id": "demo-user-a",
+        "thread_id": "s01",
+        "messages": [
+          "I cannot connect to Wi-Fi."
+        ],
+        "command": "python app.py --graph part1 --user demo-user-a --thread s01 --profile normal --message \"I cannot connect to Wi-Fi.\" --trace outputs/S01-run1.json",
+        "trace_file": "S01-run1.json",
+        "exit_code": 0
+      }
+    ],
+    "tickets": []
+  },
+  {
+    "scenario": "S02",
+    "title": "Case-insensitive password route",
+    "part": 1,
+    "status_profile": "normal",
+    "graph": "part1",
+    "reset_before": true,
+    "segments": [
+      {
+        "run": 1,
+        "after_restart": false,
+        "user_id": "demo-user-a",
+        "thread_id": "s02",
+        "messages": [
+          "I forgot my PASSWORD."
+        ],
+        "command": "python app.py --graph part1 --user demo-user-a --thread s02 --profile normal --message \"I forgot my PASSWORD.\" --trace outputs/S02-run1.json",
+        "trace_file": "S02-run1.json",
+        "exit_code": 0
+      }
+    ],
+    "tickets": []
+  },
+  {
+    "scenario": "S03",
+    "title": "Unsupported request",
+    "part": 1,
+    "status_profile": "normal",
+    "graph": "part1",
+    "reset_before": true,
+    "segments": [
+      {
+        "run": 1,
+        "after_restart": false,
+        "user_id": "demo-user-a",
+        "thread_id": "s03",
+        "messages": [
+          "My laptop screen is broken."
+        ],
+        "command": "python app.py --graph part1 --user demo-user-a --thread s03 --profile normal --message \"My laptop screen is broken.\" --trace outputs/S03-run1.json",
+        "trace_file": "S03-run1.json",
+        "exit_code": 0
+      }
+    ],
+    "tickets": []
+  },
+  {
+    "scenario": "S04",
+    "title": "Two topics before the graph change",
+    "part": 1,
+    "status_profile": "normal",
+    "graph": "part1",
+    "reset_before": true,
+    "segments": [
+      {
+        "run": 1,
+        "after_restart": false,
+        "user_id": "demo-user-a",
+        "thread_id": "s04",
+        "messages": [
+          "My Wi-Fi password does not work."
+        ],
+        "command": "python app.py --graph part1 --user demo-user-a --thread s04 --profile normal --message \"My Wi-Fi password does not work.\" --trace outputs/S04-run1.json",
+        "trace_file": "S04-run1.json",
+        "exit_code": 0
+      }
+    ],
+    "tickets": []
+  },
+  {
+    "scenario": "S05",
+    "title": "Two topics after adding clarification",
+    "part": 1,
+    "status_profile": "normal",
+    "graph": "part1-clarify",
+    "reset_before": true,
+    "segments": [
+      {
+        "run": 1,
+        "after_restart": false,
+        "user_id": "demo-user-a",
+        "thread_id": "s05",
+        "messages": [
+          "My Wi-Fi password does not work."
+        ],
+        "command": "python app.py --graph part1-clarify --user demo-user-a --thread s05 --profile normal --message \"My Wi-Fi password does not work.\" --trace outputs/S05-run1.json",
+        "trace_file": "S05-run1.json",
+        "exit_code": 0
+      }
+    ],
+    "tickets": []
+  }
+]

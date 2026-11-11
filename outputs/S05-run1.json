@@ -1,0 +1,50 @@
+{
+  "graph": "part1-clarify",
+  "user_id": "demo-user-a",
+  "thread_id": "s05",
+  "status_profile": "normal",
+  "model": null,
+  "turns": [
+    {
+      "graph": "part1-clarify",
+      "message": "My Wi-Fi password does not work.",
+      "route": [
+        "read_request",
+        "clarify_problem"
+      ],
+      "category": "both",
+      "reply": "Your message mentions both topics. Is the problem connecting to Wi-Fi, or recovering your account password? Tell me which one you want to solve first.",
+      "trace": [
+        {
+          "node": "read_request",
+          "read": {
+            "message": "My Wi-Fi password does not work."
+          },
+          "wrote": {
+            "category": "both"
+          },
+          "state_after": {
+            "message": "My Wi-Fi password does not work.",
+            "category": "both",
+            "reply": ""
+          }
+        },
+        {
+          "node": "clarify_problem",
+          "read": {
+            "category": "both",
+            "message": "My Wi-Fi password does not work."
+          },
+          "wrote": {
+            "reply": "Your message mentions both topics. Is the problem connecting to Wi-Fi, or recovering your account password? Tell me which one you want to solve first."
+          },
+          "state_after": {
+            "message": "My Wi-Fi password does not work.",
+            "category": "both",
+            "reply": "Your message mentions both topics. Is the problem connecting to Wi-Fi, or recovering your account password? Tell me which one you want to solve first."
+          }
+        }
+      ]
+    }
+  ]
+}

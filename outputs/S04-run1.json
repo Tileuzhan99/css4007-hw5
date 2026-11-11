@@ -1,0 +1,52 @@
+{
+  "graph": "part1",
+  "user_id": "demo-user-a",
+  "thread_id": "s04",
+  "status_profile": "normal",
+  "model": null,
+  "turns": [
+    {
+      "graph": "part1",
+      "message": "My Wi-Fi password does not work.",
+      "route": [
+        "read_request",
+        "wifi_help"
+      ],
+      "category": "wifi",
+      "reply": "Connect to the practice campus network (GUIDE-WIFI):\n  1. Check that Wi-Fi is enabled and airplane mode is off.\n  2. Select the fictional Campus-Demo network.\n  3. If connection fails, forget the saved network and try connecting again.\n  4. If the problem remains, check the service status before preparing a ticket.",
+      "trace": [
+        {
+          "node": "read_request",
+          "read": {
+            "message": "My Wi-Fi password does not work."
+          },
+          "wrote": {
+            "category": "wifi"
+          },
+          "state_after": {
+            "message": "My Wi-Fi password does not work.",
+            "category": "wifi",
+            "reply": ""
+          }
+        },
+        {
+          "node": "wifi_help",
+          "read": {
+            "category": "wifi",
+            "source": "data/helpdesk.json"
+          },
+          "wrote": {
+            "reply": "Connect to the practice campus network (GUIDE-WIFI):\n  1. Check that Wi-Fi is enabled and airplane mode is off.\n  2. Select the fictional Campus-Demo network.\n  3. If connection fails, forget the saved network and try connecting again.\n  4. If the problem remains, check the service status before preparing a ticket.",
+            "instruction_id": "GUIDE-WIFI"
+          },
+          "state_after": {
+            "message": "My Wi-Fi password does not work.",
+            "category": "wifi",
+            "reply": "Connect to the practice campus network (GUIDE-WIFI):\n  1. Check that Wi-Fi is enabled and airplane mode is off.\n  2. Select the fictional Campus-Demo network.\n  3. If connection fails, forget the saved network and try connecting again.\n  4. If the problem remains, check the service status before preparing a ticket.",
+            "instruction_id": "GUIDE-WIFI"
+          }
+        }
+      ]
+    }
+  ]
+}
